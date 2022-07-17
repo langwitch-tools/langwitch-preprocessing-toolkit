@@ -1,6 +1,9 @@
 //use miniserde::{json, Deserialize};
 use std::str::FromStr;
 use core::fmt::Debug;
+pub use log;
+pub use colored;
+pub use linereader;
 
 pub fn find_arg<T>(argname: &str) -> Option<T>
 where
