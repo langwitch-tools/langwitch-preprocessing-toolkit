@@ -2,7 +2,7 @@
 
 The scripts in this repo are what allowed me to generate 26 billion bitexts in a few days on a 2015 iMac.
 
-Through filtering, they allow you to turn this:
+There's no magic involved and nothing groundbreaking here, except maybe the one that detects languages with extremely high precision via LZMA compression. Just that, appropriate filtering, and post-processing allows you to turn this:
 
 ```
 src)="50"> [ Booking ]
@@ -63,4 +63,6 @@ The more interesting ones are:
 
 Deno scripts:
 
-- still writing this
+- These are pretty brittle, but they largely automate the process of finding extremely large corpora to work with. They allow you to stream the multilingual version of C4, OPUS, Oscar, and StatMT's WARC files.
+
+My goal here is to eventually be able to use Nix to create fully-reproducible, distributable, high-quality datasets and to make them accessible by anyone.
