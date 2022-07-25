@@ -135,8 +135,8 @@ macro_rules! filter_in {
     ($closure:expr) => {
         use std::io::prelude::*;
         use linereader::LineReader;
-        let mut reader = LineReader::new(std::io::stdin().lock());
-        let mut writer = std::io::BufWriter::new(std::io::stdout().lock());
+        let mut reader = LineReader::new(std::io::stdin());
+        let mut writer = std::io::BufWriter::new(std::io::stdout());
 
         let _ = reader.for_each(|line| {
             if ($closure)(line) {
@@ -156,8 +156,8 @@ macro_rules! readin {
     ($writer:ident, $closure:expr) => {
         use std::io::prelude::*;
         use linereader::LineReader;
-        let mut reader = LineReader::new(std::io::stdin().lock());
-        let mut $writer = std::io::BufWriter::new(std::io::stdout().lock());
+        let mut reader = LineReader::new(std::io::stdin());
+        let mut $writer = std::io::BufWriter::new(std::io::stdout());
 
         let _ = reader.for_each(|line| {
             ($closure)(line);
