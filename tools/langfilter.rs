@@ -21,8 +21,9 @@ fn main() {
         args:
             - desired_lang: String;
             - reference_files: String;
-            - min_confidence: f64;
+            - top_n: usize = 5;
             - sparsity: usize = 30;
+            - min_confidence: f64 = 2.0;
         ;
 
         body: || {
@@ -35,11 +36,7 @@ fn main() {
                 / lengths.len() as f64;
 
             filter_in!(|sentence: &[u8]| {
-                let top = get_likelihood_of_lang(&lengths, sentence, average_length, &desired_lang);
-                if top > min_confidence {
-                    return true;
-                }
-                false
+                get_likelihood_of_lang(&lengths, sentence, average_length, &desired_lang, top_n, min_confidence)
             });
         }
 
@@ -89,7 +86,7 @@ fn get_lengths(desired_lang: &str, language_dir: &str, sparsity: &usize) -> Hash
         .unwrap()
         .into_iter()
         .enumerate()
-        .filter(|(i, c)| i % sparsity == 0 || c.to_string_lossy().to_string() == desired_lang)
+        .filter(|(i, c)| (*i as i32).rem_euclid(*sparsity as i32) == 0 || c.to_string_lossy().to_string() == desired_lang)
         .map(|(_i, c)| c)
         .map(|fname| (fname.clone(), std::fs::File::open(fname).unwrap()))
         .collect::<Vec<_>>();
@@ -104,7 +101,7 @@ fn get_lengths(desired_lang: &str, language_dir: &str, sparsity: &usize) -> Hash
         .collect()
 }
 
-pub fn get_likelihood_of_lang(lengths: &HashMap<String, (memmap::Mmap, usize)>, input_bytes: &[u8], average_length: f64, desired_lang: &str) -> f64 {
+pub fn get_likelihood_of_lang(lengths: &HashMap<String, (memmap::Mmap, usize)>, input_bytes: &[u8], average_length: f64, desired_lang: &str, accepted_top_n: usize, min_confidence: f64) -> bool {
 
     let compressed_length = compress_prepend_size(input_bytes).len();
     let compression_ratios = lengths
@@ -120,8 +117,7 @@ pub fn get_likelihood_of_lang(lengths: &HashMap<String, (memmap::Mmap, usize)>, 
 
     //let (f1, _lang) = compression_ratios.get(0).expect("No languages found");
     let f1 = 1.0 - *f1;
-    let mut adjusted_ratios = HashMap::new();
-    compression_ratios
+    let mut adjusted_ratios: Vec<_> = compression_ratios
         .iter()
         .map(|(confidence, lang)| ((1.0 - confidence) / f1, lang))
         .map(|(confidence, lang)| {
@@ -129,7 +125,10 @@ pub fn get_likelihood_of_lang(lengths: &HashMap<String, (memmap::Mmap, usize)>, 
             let confidence = confidence * length_ratio;
             (*lang, confidence)
         })
-        .for_each(|(lang, conf)| {adjusted_ratios.insert(lang, conf);});
+        .collect();
 
-    *adjusted_ratios.get(desired_lang).expect("the language you specified wasn't in the corpus. dummy")
+    adjusted_ratios.sort_by_key(|(_, c)| (c * 1000000.0) as i32); 
+    //println!("{:#?}", adjusted_ratios);
+
+    adjusted_ratios.iter().rev().take(accepted_top_n).filter(|(_, c)| c > &min_confidence).find(|(l, _)| l == &desired_lang).is_some()
 }
