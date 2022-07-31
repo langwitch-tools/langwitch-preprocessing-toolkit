@@ -187,12 +187,12 @@ macro_rules! chan {
 
 #[macro_export]
 macro_rules! spawn {
-    ($($cloned_obj:ident),* => $($task:tt)+) => {
+    ($executor:ident @ $($cloned_obj:ident),* => $($task:tt)+) => {
         {
             $(
                 let $cloned_obj = $cloned_obj.clone();
             )*
-            smol::spawn(async move{
+            $executor.spawn(async move{
                     $($task)+
             }).detach();
         }
