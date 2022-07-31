@@ -194,7 +194,7 @@ macro_rules! spawn {
             )*
             smol::spawn(async move{
                     $($task)+
-            });
+            }).detach();
         }
     }
 }
