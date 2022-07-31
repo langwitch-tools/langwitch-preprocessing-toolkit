@@ -181,7 +181,7 @@ macro_rules! then {
 #[macro_export]
 macro_rules! chan {
     ($txname:ident, $rxname:ident) => {
-        let ($txname, $rxname) = async_std::channel::unbounded();
+        let ($txname, $rxname) = smol::channel::unbounded();
     };
 }
 
@@ -192,7 +192,7 @@ macro_rules! spawn {
             $(
                 let $cloned_obj = $cloned_obj.clone();
             )*
-            async_std::task::spawn(async move{
+            smol::spawn(async move{
                     $($task)+
             });
         }
@@ -209,7 +209,7 @@ macro_rules! whileok {
 #[macro_export]
 macro_rules! senditer {
     ($iter:expr => $txname:ident => $rxname:ident) => {
-        let ($txname, $rxname) = async_std::channel::unbounded();
+        let ($txname, $rxname) = smol::channel::unbounded();
         let __tx_cloned = $txname.clone();
         spawn!( =>
             for __item in $iter {
@@ -223,11 +223,11 @@ macro_rules! senditer {
 macro_rules! pipe {
     ($($num_workers:literal * $source_channel:ident => $closure:expr => $txname:ident => $rxname:ident),+) => {
         $(
-            let ($txname, $rxname) = async_std::channel::unbounded();
+            let ($txname, $rxname) = smol::channel::unbounded();
             for _ in (0..($num_workers)) {
                 let __rx = $source_channel.clone();
                 let new_tx = $txname.clone();
-                async_std::task::spawn(async move {
+                smol::spawn(async move {
                     loop {
                         while let Ok(item) = __rx.recv().await {
                             if let Some(result) = ($closure)(item).await {
