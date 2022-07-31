@@ -1,20 +1,18 @@
-//use miniserde::{json, Deserialize};
+use miniserde::{json, Deserialize};
 use std::str::FromStr;
-use core::fmt::Debug;
 pub use log;
 pub use colored;
 pub use linereader;
 
 pub fn find_arg<T>(argname: &str) -> Option<T>
 where
-    T: FromStr,
-    <T as FromStr>::Err: Debug
+    T: FromStr + Deserialize
 {
     std::env::args()
         .position(|a| a == argname)
         .map(|p| std::env::args().nth(p + 1))
         .flatten()
-        .map(|s| s.parse::<T>().expect(&format!("Was unable to parse {}", argname)))
+        .map(|s| s.parse::<T>().ok().or_else(|| json::from_str(&s).ok()).expect(&format!("Was unable to parse an argument: {s}")))
 }
 
 pub fn find_flag(flagname: &str) -> bool {
