@@ -2,6 +2,7 @@ pub use log;
 pub use colored;
 pub use linereader;
 pub use miniserde::*;
+pub use miniserde;
 
 pub fn find_arg<T>(argname: &str) -> Option<T>
 where
