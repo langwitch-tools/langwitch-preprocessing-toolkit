@@ -10,8 +10,7 @@ where
 {
     std::env::args()
         .position(|a| a == argname)
-        .map(|p| std::env::args().nth(p + 1))
-        .flatten()
+        .map(|p| std::env::args().skip(p + 1).take_while(|el| !el.starts_with("--")).collect::<Vec<_>>().join(" "))
         .map(|s| json::from_str(&s).ok().or_else(|| json::from_str(&format!("{:#?}", s)).ok()).expect("Was unable to parse an argument"))
         .flatten()
 }
